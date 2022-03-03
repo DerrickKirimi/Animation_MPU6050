@@ -68,18 +68,18 @@ MPU6050 mpu;
 //MPU6050 mpu(0x69); // <-- use for AD0 high
 
 Servo ESC;
-int pwm = 0;
+double pwm = 0; //CHANGED FROM INT
 int neutral = 1488; 
 int fullForward = 1832; 
 int fullReverse = 1312;
 
 
 double Input;
-static double Output;
-double Setpoint = 0;
-float Kp = 1.0;
-float Ki = 0.0;
-float Kd = 1.0;
+double Output;
+double Setpoint;
+double Kp = 1.0;
+double Ki = 0.1;
+double Kd = 1.0;
 PID balancePID(&Input,&Output,&Setpoint,Kp,Ki,Kd,DIRECT);
 
 /* =========================================================================
@@ -118,7 +118,7 @@ PID balancePID(&Input,&Output,&Setpoint,Kp,Ki,Kd,DIRECT);
 // from the FIFO. Note this also requires gravity vector calculations.
 // Also note that yaw/pitch/roll angles suffer from gimbal lock (for
 // more info, see: http://en.wikipedia.org/wiki/Gimbal_lock)
-//#define OUTPUT_READABLE_YAWPITCHROLL
+#define OUTPUT_READABLE_YAWPITCHROLL
 
 // uncomment "OUTPUT_READABLE_REALACCEL" if you want to see acceleration
 // components with gravity removed. This acceleration reference frame is
@@ -338,6 +338,7 @@ void loop() {
             Serial.print(ypr[1] * 180/M_PI);
             Serial.print("\t");
             Serial.println(ypr[2] * 180/M_PI);
+            Input = ypr[2] * 180/M_PI;
         #endif
 
         #ifdef OUTPUT_READABLE_REALACCEL
@@ -388,14 +389,21 @@ void loop() {
         blinkState = !blinkState;
         digitalWrite(LED_PIN, blinkState);
 
-        Input = ypr[0] * 180/M_PI;
+        
+        Setpoint = 0;
 
+        Serial.print("Input:\t");
+        Serial.println(Input);
+
+
+        /*
         if(Input < 0){
         balancePID.SetControllerDirection(REVERSE);
         }
         else{
         balancePID.SetControllerDirection(DIRECT);
         }
+        */
 
         Serial.print("Output1:\t");
         Serial.println(Output);
@@ -404,23 +412,36 @@ void loop() {
 
         Serial.print("Output2:\t");
         Serial.println(Output);
-        if(abs(Input) > 180){                //15000 represents max of raw gyroscope values
+        
+        Serial.print("Input  ");
+        Serial.println(Input);
+        if (Input > 180){                //15000 represents max of raw gyroscope values
                                           //TODO: Change to suitable filtered/smoothed/manipulated equivalent
 
-        pwm = map(Output, 0, 255, 1488, 1832); //map the output 
-        }
-        if(abs(Input) < -180){
-        pwm = map(Output, 0, 255, 1488, 1312);
+          pwm = map(Output, 0, 255, 1488, 1832); //map the output 
         }
 
-        int constrainedpwm = constrain(pwm, 1312, 1832);
-        write_pwm(constrainedpwm); //Ensure pwm values is within limits required by ESC
+        Serial.print("Input  ");
+        Serial.println(Input);
+        if (Input < -180){
+          
+          pwm = map(Output, 0, 255, 1488, 1312);
+        }
+
+        Serial.print("pwm:  ");
+        Serial.println(pwm);
+        
+        //int constrainedpwm = constrain(pwm, 1312, 1832);
+        //write_pwm(constrainedpwm); //Ensure pwm values is within limits required by ESC
+        write_pwm(pwm);
         
         
-        Serial.print("Constrained pwm:  ");
-        Serial.println(constrainedpwm);
-        delay(1000);
-            
+        //Serial.print("Constrained pwm:  ");
+        //Serial.println(constrainedpwm);
+        
+           
+
+        delay(1000);  
 
 
         Serial.println("Done");
