@@ -1,4 +1,4 @@
-from turtle import title
+#from turtle import title
 from vpython import *
 import math 
 import serial
@@ -20,7 +20,7 @@ def rotationInfo(ringPos, arrowOffset, angleName):
                     radius = 0.2, thickness = 0.06, length = 0.3, shaftwidth = 0.05)
     #angleName  
     ringText = text(pos = ringPos*(1+(0.4/ringPos.mag)), text = angleName,
-                    color = color.white, height = 0.2, depth = 0.05
+                    color = color.white, height = 0.2, depth = 0.05,
                         align = 'center', up = vector(0,0,-1))
 
     
@@ -78,7 +78,7 @@ ESPSerial = serial.Serial('dev/ttyUSB0',115200)
 
 while (True):
     try:
-        while (ESPSerial.inWaiting()=0):
+        while (ESPSerial.inWaiting()==0):
             pass
         dataPacket = ESPSerial.readline()
         dataPacket = str(dataPacket, 'utf_8')
